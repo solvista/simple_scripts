@@ -1,0 +1,23 @@
+#!/usr/bin/bash
+
+#get first 3 octets of network IP and save to .txt file
+ifconfig | grep "broadcast" | cut -d " " -f 10 | cut -d "." -f 1,2,3 | uniq > ip_octets.txt
+
+#Set variable to the value of the .txt file
+OCTETS=$(cat ip_octets.txt)
+
+#Clear previous results or create new .txt file
+echo "" > $OCTETS.txt
+
+#perform looping
+for ip in {1..254}
+do
+         ping -c 1 $OCTETS.$ip | grep "64 bytes" | cut -d " " -f 4 | tr -d ":" >> $OCTETS.txt  &
+done
+
+cat $OCTETS.txt | sort > sorted_$OCTETS.txt
+
+#perform nmap port scan on devices in the network
+nmap -sS --top-ports 20 -iL sorted_$OCTETS.txt
+
+exit
